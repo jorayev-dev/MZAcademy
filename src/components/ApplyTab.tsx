@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, CheckSquare, Sparkles, PhoneCall, CheckCircle2, Award, Users, MapPin, ChevronRight } from 'lucide-react';
 import { Course, EnrollmentApplication } from '../types';
-
+import { supabase } from '../supabaseClient';
 interface ApplyTabProps {
   courses: Course[];
   selectedCourseId: string;
@@ -28,9 +28,10 @@ export default function ApplyTab({ courses, selectedCourseId, onAddApplication, 
       }
     }
   }, [selectedCourseId, courses]);
+// Fayl tepasiga importni qo'shishni unutmang:
+  // import { supabase } from '../supabaseClient'; 
 
-  // Handle local state form submit
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => { // 'async' qo'shildi
     e.preventDefault();
     if (!studentName.trim()) {
       alert("Iltimos, ism va familiyangizni kiriting.");
@@ -41,6 +42,21 @@ export default function ApplyTab({ courses, selectedCourseId, onAddApplication, 
       return;
     }
 
+    // 1. Supabase-ga yuborish qismi
+    const { error } = await supabase
+      .from('arizalar')
+      .insert([{ 
+        ism: studentName, 
+        telefon: phoneInput, 
+        kurs: courseChoice 
+      }]);
+
+    if (error) {
+      alert("Xatolik yuz berdi: " + error.message);
+      return;
+    }
+
+    // 2. Bazaga ketgandan keyin, avvalgi kod davom etadi
     const matchedCourse = courses.find((c) => c.id === courseChoice);
     const courseTitle = matchedCourse ? matchedCourse.title : "Ingliz tili kursi";
 
@@ -58,7 +74,6 @@ export default function ApplyTab({ courses, selectedCourseId, onAddApplication, 
     onAddApplication(applicationObj);
     setIsSubmitted(true);
   };
-
   const handleResetForm = () => {
     setStudentName('');
     setPhoneInput('');
